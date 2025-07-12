@@ -165,10 +165,3 @@ All charts are interactive and responsive, powered by Plotly and Streamlit.
 
 Vignesh Raj Nadar ([GitHub Profile](https://github.com/VigneshrajNadar))
 
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-
