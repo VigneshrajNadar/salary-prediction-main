@@ -169,76 +169,6 @@ if not missing.empty:
 else:
     st.success('No missing values found!')
 
-# --- Animated Average Salary by Unit (Bar Chart) ---
-# Animate over 'SEX' (gender) if available
-
-if 'SEX' in data.columns:
-    units = data['UNIT'].unique()
-    sexes = data['SEX'].unique()
-    frames = []
-    for sex in sexes:
-        df = data[data['SEX'] == sex]
-        group = df.groupby('UNIT')['SALARY'].mean().reset_index()
-        group = group.sort_values('SALARY', ascending=True)
-        frames.append(go.Frame(
-            data=[go.Bar(
-                x=group['SALARY'],
-                y=group['UNIT'],
-                orientation='h',
-                marker=dict(color=group['SALARY'], colorscale='Viridis'),
-                text=group['SALARY'].round(0),
-                textposition='auto',
-            )],
-            name=str(sex)
-        ))
-    # Initial data for the first frame
-    first_group = data[data['SEX'] == sexes[0]].groupby('UNIT')['SALARY'].mean().reset_index().sort_values('SALARY', ascending=True)
-    fig6 = go.Figure(
-        data=[go.Bar(
-            x=first_group['SALARY'],
-            y=first_group['UNIT'],
-            orientation='h',
-            marker=dict(color=first_group['SALARY'], colorscale='Viridis'),
-            text=first_group['SALARY'].round(0),
-            textposition='auto',
-        )],
-        frames=frames
-    )
-    fig6.update_layout(
-        width=800,
-        height=450,
-        title='Animated Average Salary by Unit (by Gender)',
-        updatemenus=[{
-            'type': 'buttons',
-            'showactive': False,
-            'buttons': [
-                {'label': 'Play', 'method': 'animate', 'args': [None, {'frame': {'duration': 1200, 'redraw': True}, 'fromcurrent': True}]},
-                {'label': 'Pause', 'method': 'animate', 'args': [[None], {'frame': {'duration': 0, 'redraw': False}, 'mode': 'immediate', 'transition': {'duration': 0}}]},
-            ]
-        }],
-        sliders=[{
-            'steps': [
-                {'method': 'animate', 'label': str(sex), 'args': [[str(sex)], {'frame': {'duration': 1200, 'redraw': True}, 'mode': 'immediate'}]} for sex in sexes
-            ],
-            'transition': {'duration': 400},
-            'x': 0.1,
-            'len': 0.8
-        }],
-        margin=dict(l=80, r=20, t=60, b=40),
-        yaxis_title='Unit',
-        xaxis_title='Average Salary',
-        yaxis=dict(tickfont=dict(size=14)),
-        xaxis=dict(tickfont=dict(size=14)),
-    )
-    st.plotly_chart(fig6)
-else:
-    # Fallback: static bar chart if 'SEX' not available
-    st.subheader("🟢 Average Salary by Unit")
-    salary_by_unit = data.groupby('UNIT')['SALARY'].mean().sort_values(ascending=False).reset_index()
-    fig6 = px.bar(salary_by_unit, x='UNIT', y='SALARY', color='UNIT', title='', width=800, height=450)
-    fig6.update_layout(showlegend=False, margin=dict(l=10, r=10, t=30, b=10))
-    st.plotly_chart(fig6)
-
 # --- Experience vs. Salary (Scatter Plot) ---
 st.subheader("🔴 Experience vs. Salary by Designation")
 if 'PAST EXP' in data.columns:
@@ -289,73 +219,106 @@ st.markdown('<div style="height: 2em;"></div>', unsafe_allow_html=True)
 
 # --- All chart sizes and layout are now optimized for laptop screens --- 
 
-# --- Animation Speed Control (Visible at Top) ---
-st.markdown('---')
-st.markdown('### Animation Controls')
-speed_option = st.radio(
-    'Select Animation Speed:',
-    ['Slow', 'Moderate', 'Fast'],
-    index=1,
-    horizontal=True
+# --- Average Salary by Unit (Static Bar Chart) ---
+st.subheader("🟢 Average Salary by Unit")
+salary_by_unit = data.groupby('UNIT')['SALARY'].mean().sort_values(ascending=False).reset_index()
+fig_unit = px.bar(
+    salary_by_unit,
+    x='UNIT',
+    y='SALARY',
+    color='UNIT',
+    title='Average Salary by Unit',
+    width=700,
+    height=400
 )
-if speed_option == 'Slow':
-    ANIMATION_FRAME_DURATION = 2500  # ms
-    ANIMATION_TRANSITION_DURATION = 1200  # ms
-elif speed_option == 'Fast':
-    ANIMATION_FRAME_DURATION = 800
-    ANIMATION_TRANSITION_DURATION = 300
+fig_unit.update_layout(showlegend=False, margin=dict(l=10, r=10, t=40, b=10))
+st.plotly_chart(fig_unit) 
+
+# --- Salary Distribution by Unit (Boxplot) ---
+st.subheader("🟣 Salary Distribution by Unit (Boxplot)")
+if 'UNIT' in data.columns:
+    fig_box_unit, ax_box_unit = plt.subplots(figsize=(7, 3.5))
+    data.boxplot(column='SALARY', by='UNIT', ax=ax_box_unit, grid=False, patch_artist=True,
+                 boxprops=dict(facecolor='#43C59E', color='#6C47FF'))
+    ax_box_unit.set_title('Salary by Unit')
+    ax_box_unit.set_xlabel('Unit')
+    ax_box_unit.set_ylabel('Salary')
+    plt.suptitle('')
+    st.pyplot(fig_box_unit)
 else:
-    ANIMATION_FRAME_DURATION = 1800
-    ANIMATION_TRANSITION_DURATION = 800
+    st.info('Unit data not available for boxplot.')
 
-# --- Animated Salary by Designation ---
-# (Use speed variables in update_layout)
-fig3.update_layout(
-    updatemenus=[{
-        'type': 'buttons',
-        'showactive': False,
-        'buttons': [
-            {'label': 'Play', 'method': 'animate', 'args': [None, {'frame': {'duration': ANIMATION_FRAME_DURATION, 'redraw': True}, 'fromcurrent': True}]},
-            {'label': 'Pause', 'method': 'animate', 'args': [[None], {'frame': {'duration': 0, 'redraw': False}, 'mode': 'immediate', 'transition': {'duration': 0}}]},
-        ]
-    }],
-    sliders=[{
-        'steps': [
-            {'method': 'animate', 'label': str(frame.name), 'args': [[str(frame.name)], {'frame': {'duration': ANIMATION_FRAME_DURATION, 'redraw': True}, 'mode': 'immediate'}]} for frame in fig3.frames
-        ],
-        'transition': {'duration': ANIMATION_TRANSITION_DURATION},
-        'x': 0.1,
-        'len': 0.8
-    }],
-    xaxis_title='Designation',
-    yaxis_title='Average Salary',
-    width=800,
-    height=450,
-    margin=dict(l=10, r=10, t=60, b=10),
-)
+# --- Median Salary by Designation (Bar Chart) ---
+st.subheader("🟤 Median Salary by Designation")
+if 'DESIGNATION' in data.columns:
+    med_salary_des = data.groupby('DESIGNATION')['SALARY'].median().sort_values(ascending=False).reset_index()
+    fig_med_des = px.bar(med_salary_des, x='DESIGNATION', y='SALARY', color='SALARY',
+                        color_continuous_scale='Blues', width=700, height=350,
+                        title='Median Salary by Designation')
+    fig_med_des.update_layout(margin=dict(l=10, r=10, t=40, b=10), xaxis_title='Designation', yaxis_title='Median Salary')
+    st.plotly_chart(fig_med_des)
+else:
+    st.info('Designation data not available for median salary chart.')
 
-# --- Animated Average Salary by Unit ---
-# (Use speed variables in update_layout)
-fig6.update_layout(
-    updatemenus=[{
-        'type': 'buttons',
-        'showactive': False,
-        'buttons': [
-            {'label': 'Play', 'method': 'animate', 'args': [None, {'frame': {'duration': ANIMATION_FRAME_DURATION, 'redraw': True}, 'fromcurrent': True}]},
-            {'label': 'Pause', 'method': 'animate', 'args': [[None], {'frame': {'duration': 0, 'redraw': False}, 'mode': 'immediate', 'transition': {'duration': 0}}]},
-        ]
-    }],
-    sliders=[{
-        'steps': [
-            {'method': 'animate', 'label': str(sex), 'args': [[str(sex)], {'frame': {'duration': ANIMATION_FRAME_DURATION, 'redraw': True}, 'mode': 'immediate'}]} for sex in sexes
-        ],
-        'transition': {'duration': ANIMATION_TRANSITION_DURATION},
-        'x': 0.1,
-        'len': 0.8
-    }],
-    margin=dict(l=80, r=20, t=60, b=40),
-    yaxis_title='Unit',
-    xaxis_title='Average Salary',
-    yaxis=dict(tickfont=dict(size=14)),
-    xaxis=dict(tickfont=dict(size=14)),
-) 
+# --- Employee Count by Experience Bucket (Bar Chart) ---
+st.subheader("🟢 Employee Count by Experience Bucket")
+if 'PAST EXP' in data.columns:
+    bins = [0, 2, 5, 10, 20, 50]
+    labels = ['0-2', '3-5', '6-10', '11-20', '20+']
+    data['EXP_BUCKET'] = pd.cut(data['PAST EXP'], bins=bins, labels=labels, right=False)
+    exp_count = data['EXP_BUCKET'].value_counts().sort_index().reset_index()
+    exp_count.columns = ['Experience Bucket', 'Count']
+    fig_exp_count = px.bar(exp_count, x='Experience Bucket', y='Count', color='Count', width=700, height=350, color_continuous_scale='Viridis')
+    fig_exp_count.update_layout(margin=dict(l=10, r=10, t=40, b=10))
+    st.plotly_chart(fig_exp_count)
+else:
+    st.info('Experience data not available for experience bucket chart.')
+
+# --- Salary vs. Experience (Line, by Unit) ---
+st.subheader("🔵 Salary vs. Experience (Line, by Unit)")
+if 'PAST EXP' in data.columns and 'UNIT' in data.columns:
+    exp_unit = data.groupby(['PAST EXP', 'UNIT'])['SALARY'].mean().reset_index()
+    fig_exp_unit = px.line(exp_unit, x='PAST EXP', y='SALARY', color='UNIT', width=700, height=350,
+                          labels={'PAST EXP': 'Years of Experience', 'SALARY': 'Avg Salary'},
+                          title='Average Salary vs. Experience by Unit')
+    fig_exp_unit.update_layout(margin=dict(l=10, r=10, t=40, b=10))
+    st.plotly_chart(fig_exp_unit)
+else:
+    st.info('Experience or unit data not available for salary vs. experience chart.')
+
+# --- Gender Pay Gap by Unit (Bar) ---
+st.subheader("🟠 Gender Pay Gap by Unit")
+if 'UNIT' in data.columns and 'SEX' in data.columns:
+    paygap = data.groupby(['UNIT', 'SEX'])['SALARY'].mean().unstack()
+    paygap['Gap'] = paygap.max(axis=1) - paygap.min(axis=1)
+    paygap = paygap.sort_values('Gap', ascending=False)
+    fig_paygap = px.bar(paygap.reset_index(), x='UNIT', y=paygap.columns[:-1], barmode='group',
+                       width=700, height=350, title='Average Salary by Gender and Unit')
+    fig_paygap.update_layout(margin=dict(l=10, r=10, t=40, b=10), yaxis_title='Avg Salary')
+    st.plotly_chart(fig_paygap)
+else:
+    st.info('Unit or gender data not available for pay gap chart.')
+
+# --- Top 10 Highest Paid Employees (Table) ---
+st.subheader("🔴 Top 10 Highest Paid Employees")
+top10 = data.sort_values('SALARY', ascending=False).head(10)
+st.dataframe(top10.reset_index(drop=True))
+
+# --- Correlation Heatmap ---
+st.subheader("🟡 Correlation Heatmap")
+numeric_cols = data.select_dtypes(include='number')
+if numeric_cols.shape[1] > 1:
+    corr = numeric_cols.corr()
+    fig_corr, ax_corr = plt.subplots(figsize=(6, 4))
+    im = ax_corr.imshow(corr, cmap='coolwarm', interpolation='nearest')
+    ax_corr.set_xticks(range(len(corr.columns)))
+    ax_corr.set_yticks(range(len(corr.columns)))
+    ax_corr.set_xticklabels(corr.columns, rotation=45, ha='right')
+    ax_corr.set_yticklabels(corr.columns)
+    plt.colorbar(im, ax=ax_corr, fraction=0.046, pad=0.04)
+    ax_corr.set_title('Correlation Heatmap')
+    st.pyplot(fig_corr)
+else:
+    st.info('Not enough numeric data for correlation heatmap.') 
+
+# NOTE: All Plotly charts are now extra small for compact laptop display: width=400, height=250 
