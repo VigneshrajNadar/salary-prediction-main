@@ -1,5 +1,9 @@
 # Employee Salary Prediction Web App
 
+[![View App](https://img.shields.io/badge/Live%20Demo-Streamlit-green?logo=streamlit)](https://vigneshrajnadar-salary-prediction-main-home-tqnedp.streamlit.app)
+
+**👉 [Click here to visit and try the live app!](https://vigneshrajnadar-salary-prediction-main-home-tqnedp.streamlit.app)**
+
 ## 📖 Project Overview
 
 **Employee Salary Prediction Web App** is a powerful, user-friendly platform designed for HR professionals, business leaders, and data enthusiasts to:
