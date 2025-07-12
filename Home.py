@@ -90,11 +90,3 @@ if submitted:
         st.balloons()
     except ValueError as e:
         st.error(f"Prediction failed: {e}. Please check your input values.")
-
-# --- Footer ---
-st.markdown(f"""
----
-<div style='text-align: center; color: {SUBTEXT_COLOR}; font-size: 1.1em; margin-top: 2.5em;'>
-    &copy; 2024 Salary Predictor &mdash; Powered by Streamlit & scikit-learn
-</div>
-""", unsafe_allow_html=True)
